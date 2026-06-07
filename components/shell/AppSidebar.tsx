@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +20,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
+import { CustomSidebarTrigger } from "./CustomSidebarTrigger";
 
 const sidebarMenuButtons = [
   {
@@ -84,7 +87,9 @@ export function AppSidebar() {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter />
+      <SidebarFooter>
+        <CustomSidebarTrigger />
+      </SidebarFooter>
     </Sidebar>
   );
 }

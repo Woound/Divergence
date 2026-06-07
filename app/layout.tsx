@@ -39,10 +39,7 @@ export default function RootLayout({
           <SidebarProvider>
             <AppSidebar />
             <SidebarInset>
-              <div className="flex items-center gap-3 p-4">
-                <SidebarTrigger />
-                {children}
-              </div>
+              <div className="flex items-center gap-3 p-4">{children}</div>
             </SidebarInset>
           </SidebarProvider>
         </TooltipProvider>
