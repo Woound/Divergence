@@ -1,0 +1,166 @@
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT,
+  timezone TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+alter table profiles enable row level security;
+
+CREATE TABLE habits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  hint TEXT,
+  target_count INT NOT NULL default 1,
+  sort_order INT,
+  archieved_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+alter table habits enable row level security;
+create policy "Users can view their own habits"
+on habits
+for SELECT using ( auth.uid() = user_id );
+
+create policy "Users can create habits for themselves"
+on habits for INSERT with check ( auth.uid() = user_id );
+
+create policy "Users can delete their own habits"
+on habits
+for DELETE using ( auth.uid() = user_id );
+
+create policy "Users can update their own habits"
+on habits
+for UPDATE
+using ( auth.uid() = user_id )
+with check ( auth.uid() = user_id );
+create policy "Users can view their own profile"
+on profiles
+for SELECT using (auth.uid() = id);
+
+create policy "Users can delete their own profile"
+on profiles
+for DELETE using ( auth.uid() = id);
+
+create policy "Users can can edit their own profile"
+on profiles
+for UPDATE using ( auth.uid() = id)
+with check ( auth.uid() = id );
+
+create function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.profiles (id)
+  values (new.id);
+
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+  create type mood as enum ('rough', 'low', 'okay', 'good', 'great');
+
+create table daily_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  mood mood,
+  rating INT,
+  note TEXT,
+  completion_percent INT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  unique (user_id, date)
+);
+
+alter table daily_logs enable row level security;
+
+create policy "Users can create their own daily logs"
+on daily_logs
+for INSERT with check ( auth.uid() = user_id );
+
+create policy "Users can view their own daily logs"
+on daily_logs 
+for SELECT using ( auth.uid() = user_id );
+
+create policy "Users can update their own daily logs"
+on daily_logs
+for UPDATE
+using ( auth.uid() = user_id )
+with check ( auth.uid() = user_id );
+
+create policy "Users can delete their own daily logs"
+on daily_logs
+for DELETE using ( auth.uid() = user_id );
+
+create table habit_entries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  daily_log_id UUID NOT NULL REFERENCES daily_logs(id) ON DELETE CASCADE,
+  habit_id UUID NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  value INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  unique (daily_log_id, habit_id)
+);
+
+alter table habit_entries enable row level security;
+
+create policy "Users can view their own habit entries"
+on habit_entries for SELECT
+using ( auth.uid() = user_id );
+
+create policy "Users can create their own habit entries"
+on habit_entries for INSERT
+with check ( auth.uid() = user_id );
+
+create policy "Users can update their own habit entries"
+on habit_entries for UPDATE
+using ( auth.uid() = user_id )
+with check ( auth.uid() = user_id );
+
+create policy "Users can delete their own habit entries"
+on habit_entries for DELETE
+using ( auth.uid() = user_id );
+
+create type insight_category as enum ('correlation', 'pattern', 'nudge');
+
+create table insights (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  category insight_category NOT NULL,
+  heading TEXT NOT NULL,
+  body TEXT NOT NULL,
+  generated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  dismissed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+alter table insights enable row level security;
+
+create policy "Users can view their own insights"
+on insights for SELECT
+using ( auth.uid() = user_id );
+
+create policy "Users can create their own insights"
+on insights for INSERT
+with check ( auth.uid() = user_id );
+
+create policy "Users can update their own insights"
+on insights for UPDATE
+using ( auth.uid() = user_id )
+with check ( auth.uid() = user_id );
+
+create policy "Users can delete their own insights"
+on insights for DELETE
+using ( auth.uid() = user_id );
