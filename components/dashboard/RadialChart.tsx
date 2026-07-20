@@ -10,21 +10,24 @@ import {
 
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 
-export const description = "A radial chart with text";
-
-const chartData = [{ browser: "safari", visitors: 200, fill: "#6EE7A8" }];
+const COMPLETION_COLOR = "#6EE7A8";
 
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  safari: {
-    label: "Safari",
-    color: "#6EE7A8",
+  completion: {
+    label: "Completion",
+    color: COMPLETION_COLOR,
   },
 } satisfies ChartConfig;
 
-export function RadialChart() {
+export function RadialChart({
+  completionPercentage,
+}: {
+  completionPercentage: number;
+}) {
+  const chartData = [
+    { completion: completionPercentage, fill: COMPLETION_COLOR },
+  ];
+
   return (
     <ChartContainer
       config={chartConfig}
@@ -32,8 +35,8 @@ export function RadialChart() {
     >
       <RadialBarChart
         data={chartData}
-        startAngle={0}
-        endAngle={250}
+        startAngle={90}
+        endAngle={90 - (completionPercentage / 100) * 360}
         outerRadius={90}
         innerRadius={80}
       >
@@ -44,7 +47,7 @@ export function RadialChart() {
           className="first:fill-muted last:fill-background"
           polarRadius={[90, 80]}
         />
-        <RadialBar dataKey="visitors" background cornerRadius={10} />
+        <RadialBar dataKey="completion" background cornerRadius={10} />
         <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
           <Label
             content={({ viewBox }) => {
@@ -61,7 +64,7 @@ export function RadialChart() {
                       y={viewBox.cy}
                       className="fill-foreground text-4xl font-bold"
                     >
-                      {chartData[0].visitors.toLocaleString()}
+                      {completionPercentage}
                       <tspan className="text-2xl">%</tspan>
                     </tspan>
                     <tspan

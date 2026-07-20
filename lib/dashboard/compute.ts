@@ -19,7 +19,13 @@ export type HabitEntry = {
   value: number;
 };
 
-function toISODate(d: Date): string {
+export type Points = {
+  earned: number;
+  total: number;
+  percent: number;
+};
+
+export function toISODate(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
@@ -54,7 +60,7 @@ export function todayPoints(
 }
 
 export function monthStats(
-  logs: DailyLog[],
+  logs: { date: string; completion_percent: number | null }[],
   today: Date,
 ): { percent: number; complete: number; total: number } {
   // "2026-06", compare the string prefix to avoid Date/UTC parsing surprises.
@@ -70,22 +76,23 @@ export function monthStats(
   // Days elapsed so far this month (the "/ N" in "10/11 days complete").
   const total = today.getDate();
 
-  // The headline %: average completion across the month's logged days.
+  // The headline %: average completion across every day elapsed this month,
+  // counting unlogged days as 0.
   const percent =
-    currentMonthLogs.length === 0
+    total === 0
       ? 0
       : Math.round(
           currentMonthLogs.reduce(
             (sum, log) => sum + (log.completion_percent ?? 0),
             0,
-          ) / currentMonthLogs.length,
+          ) / total,
         );
 
   return { percent, complete, total };
 }
 
 export function computeStreaks(
-  logs: DailyLog[],
+  logs: { date: string; completion_percent: number | null }[],
   today: Date,
 ): { current: number; best: number } {
   const completeDays = new Set(
