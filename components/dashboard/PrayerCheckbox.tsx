@@ -25,7 +25,7 @@ export function PrayerCheckbox({ id, label, hint, target, ticked }: Props) {
     <button
       type="button"
       onClick={click}
-      aria-label={`${label}: ${value} of ${target}`}
+      aria-label={`${label ?? "Habit"}: ${value} of ${target}`}
       className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left
                  transition-colors hover:bg-muted/50 cursor-pointer"
     >
