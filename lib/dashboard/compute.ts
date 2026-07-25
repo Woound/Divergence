@@ -124,11 +124,10 @@ export function computeStreaks(
 
   for (const date of sorted) {
     if (prev !== null) {
-      const expected = new Date(prev);
+      const expected = new Date(`${prev}T00:00:00`);
       expected.setDate(expected.getDate() + 1);
       run = toISODate(expected) === date ? run + 1 : 1;
     } else {
-      run = 1;
     }
     if (run > best) best = run;
     prev = date;
