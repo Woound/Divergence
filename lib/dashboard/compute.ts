@@ -42,16 +42,13 @@ export function todayPoints(
 } {
   const total = habits.reduce((sum, habit) => sum + habit.target_count, 0);
 
+  const maxByHabitId = new Map(
+    habits.map((habit) => [habit.id, habit.target_count]),
+  );
+
   const earned: number = entries.reduce((sum, entry) => {
-    const max_amount = habits.find(
-      (habit) => habit.id == entry.habit_id,
-    )?.target_count;
-    let entered_amount = 0;
-    if (max_amount) {
-      entered_amount = Math.min(entry.value, max_amount);
-    }
-    sum += entered_amount;
-    return sum;
+    const max_amount = maxByHabitId.get(entry.habit_id) ?? 0;
+    return sum + Math.min(entry.value, max_amount);
   }, 0);
 
   const percent = total === 0 ? 0 : Math.round((earned / total) * 100);
