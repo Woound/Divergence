@@ -1,5 +1,3 @@
-"use client";
-
 import { CurrentStreakChart } from "@/components/dashboard/CurrentStreakChart";
 import { RadialChart } from "@/components/dashboard/RadialChart";
 import { ClientDate } from "@/components/shell/ClientDate";
@@ -11,8 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getGreeting } from "@/lib/utils";
-import { useEffect, useState } from "react";
 import { Circle } from "lucide-react";
 import { ThisMonthChart } from "@/components/dashboard/ThisMonthChart";
 import { NonNegotiables } from "@/components/dashboard/NonNegotiables";
@@ -20,13 +16,67 @@ import { HowWasToday } from "@/components/dashboard/HowWasToday";
 import { CompletionOverTimeChart } from "@/components/dashboard/CompletionOverTimeChart";
 import { ConsistencyCalendar } from "@/components/dashboard/ConsistencyCalendar";
 import { Reflection } from "@/components/dashboard/Reflection";
+import { Greeting } from "@/components/dashboard/Greeting";
+import { createClient } from "@/lib/supabase/server";
+import {
+  computeStreaks,
+  monthStats,
+  todayPoints,
+  toISODate,
+  type HabitEntry,
+} from "@/lib/dashboard/compute";
+import { SupabaseClient } from "@supabase/supabase-js";
 
-const DashboardPage = () => {
-  const [greeting, setGreeting] = useState("");
-  useEffect(() => {
-    const receivedGreeting = getGreeting();
-    setGreeting(receivedGreeting);
-  }, []);
+// Loads everything the dashboard needs from Supabase.
+async function getDashboardData(supabase: SupabaseClient) {
+  const today = toISODate(new Date());
+
+  const { data: habits } = await supabase
+    .from("habits")
+    .select("id, name, hint, target_count, sort_order");
+
+  const { data: todayLog } = await supabase
+    .from("daily_logs")
+    .select("id")
+    .eq("date", today)
+    .maybeSingle();
+
+  // Only today's entries exist to fetch once the day's log has been created.
+  let entries: HabitEntry[] = [];
+  if (todayLog) {
+    const { data } = await supabase
+      .from("habit_entries")
+      .select("habit_id, value")
+      .eq("daily_log_id", todayLog.id);
+    entries = data ?? [];
+  }
+
+  const points = todayPoints(habits ?? [], entries);
+
+  return { habits: habits ?? [], entries, points };
+}
+
+async function getMonthStatsData(supabase: SupabaseClient) {
+  const { data: dailyLogs } = await supabase
+    .from("daily_logs")
+    .select("date, completion_percent");
+
+  return monthStats(dailyLogs ?? [], new Date());
+}
+
+async function getCurrentStreakData(supabase: SupabaseClient) {
+  const { data: dailyLogs } = await supabase
+    .from("daily_logs")
+    .select("date, completion_percent");
+
+  return computeStreaks(dailyLogs ?? [], new Date());
+}
+
+const DashboardPage = async () => {
+  const supabase = await createClient();
+  const { habits, entries, points } = await getDashboardData(supabase);
+  const monthStatsData = await getMonthStatsData(supabase);
+  const streakData = await getCurrentStreakData(supabase);
 
   return (
     <div className="w-full px-4 mt-2.5">
@@ -39,9 +89,7 @@ const DashboardPage = () => {
         </div>
       </div>
       <div>
-        <h1 className=" mt-3.5 text-3xl font-semibold">
-          Good {greeting} Wound.
-        </h1>
+        <Greeting />
         <p className="mt-2 text-gray-300">
           11-day run going. 10 points left to keep it alive today.
         </p>
@@ -56,19 +104,22 @@ const DashboardPage = () => {
           </CardHeader>
           <CardContent className="flex items-center">
             <div className="w-64">
-              <RadialChart />
+              <RadialChart completionPercentage={points.percent} />
             </div>
             <div>
               <h2 className="text-4xl">
-                0<span className="text-xl">/10</span>
+                {points.earned}
+                <span className="text-xl">/{points.total}</span>
               </h2>
               <p className="mt-1.5 text-sm text-muted-foreground">
-                9 points from a complete day.
+                {points.percent === 100
+                  ? "Day completed, well done!"
+                  : `${points.total - points.earned} points from a complete day.`}
               </p>
             </div>
           </CardContent>
           <div className="-mt-6 px-14">
-            <NonNegotiables />
+            <NonNegotiables habits={habits ?? []} entries={entries ?? []} />
           </div>
         </Card>
 
@@ -85,11 +136,16 @@ const DashboardPage = () => {
           </CardHeader>
           <CardContent>
             <p className="text-5xl flex items-end gap-1 font-semibold">
-              11 <span className="text-xl font-normal">days</span>
+              {streakData.current}{" "}
+              <span className="text-xl font-normal">
+                {streakData.current === 1 ? "day" : "days"}
+              </span>
             </p>
             <div className="flex gap-1 mt-1">
               <p className=" text-muted-foreground">Best run - </p>
-              <span className=" text-muted-foreground">11 days</span>
+              <span className=" text-muted-foreground">
+                {streakData.best} {streakData.best === 1 ? "day" : "days"}
+              </span>
             </div>
             <div>
               <CurrentStreakChart />
@@ -104,10 +160,14 @@ const DashboardPage = () => {
           </CardHeader>
           <CardContent>
             <p className="text-5xl flex items-end gap-1 font-semibold">
-              83 <span className="text-xl font-normal">%</span>
+              {monthStatsData.percent}
+              <span className="text-xl font-normal">%</span>
             </p>
             <div className="flex gap-1 mt-1">
-              <p className=" text-muted-foreground">5/6 days complete</p>
+              <p className=" text-muted-foreground">
+                {`${monthStatsData.complete} / ${monthStatsData.total}`} days
+                complete
+              </p>
             </div>
             <div>
               <ThisMonthChart />

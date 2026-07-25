@@ -1,3 +1,4 @@
+"use client";
 import { useSidebar } from "@/components/ui/sidebar";
 import { ChevronLeft } from "lucide-react";
 
