@@ -18,6 +18,18 @@
 -- (5 Prayers counts as 5, the rest as 1 each).
 -- ============================================================
 
+-- Optional: make reruns safe by removing previously seeded rows for this user.
+delete from habits
+where user_id = 'PASTE-YOUR-USER-UUID-HERE'::uuid
+  and name in (
+    '5 Prayers',
+    'Quran',
+    'Work out',
+    'Study · Block 1',
+    'Study · Block 2',
+    'Read'
+  );
+
 insert into habits (user_id, name, hint, target_count, sort_order)
 select
   seed_user.id,
