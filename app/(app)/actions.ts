@@ -53,7 +53,6 @@ export async function setHabitValue(habitId: string, value: number) {
       },
     )
     .select();
-  console.log("upserting habit entry", upsertHabitEntry);
   if (!upsertHabitEntry.data) return;
 
   const { data: habit_entries } = await supabase
