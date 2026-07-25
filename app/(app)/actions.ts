@@ -70,14 +70,12 @@ export async function setHabitValue(habitId: string, value: number) {
       habits,
       habit_entries,
     );
-    const upsertCompletionPercent = await supabase
+    await supabase
       .from("daily_logs")
       .update({
         completion_percent: completionValues.percent,
       })
-      .eq("id", upsertingDailyLog.data.id)
-      .select();
-    console.log("upserting completion percent", upsertCompletionPercent);
+      .eq("id", upsertingDailyLog.data.id);
   }
 
   revalidatePath("/");
