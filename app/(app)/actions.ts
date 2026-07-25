@@ -26,8 +26,6 @@ export async function setHabitValue(habitId: string, value: number) {
 
   if (!user) return;
 
-  console.log(value);
-
   const upsertingDailyLog = await supabase
     .from("daily_logs")
     .upsert(
@@ -39,7 +37,6 @@ export async function setHabitValue(habitId: string, value: number) {
     )
     .select("id")
     .single();
-  console.log("upserting daily log", upsertingDailyLog);
   if (!upsertingDailyLog.data) return;
 
   const upsertHabitEntry = await supabase
