@@ -4,11 +4,9 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
   SidebarHeader,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarMenuAction,
   SidebarMenu,
 } from "@/components/ui/sidebar";
 import sideBarLogo from "@/assets/mark-mint.svg";

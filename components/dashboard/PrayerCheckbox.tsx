@@ -2,7 +2,7 @@
 
 import { setHabitValue } from "@/app/(app)/actions";
 import { Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type Props = {
   id: string;
