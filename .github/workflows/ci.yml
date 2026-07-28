@@ -15,6 +15,7 @@ permissions:
 jobs:
   build-and-lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
@@ -37,5 +38,3 @@ jobs:
 
       - name: Build application
         run: npm run build
-        env:
-          CI: true
