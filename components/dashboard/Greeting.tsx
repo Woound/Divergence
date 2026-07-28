@@ -1,9 +1,15 @@
 "use client";
 
 import { getGreeting } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 export function Greeting() {
-  const greetingMsg = getGreeting();
+  const [greetingMsg, setGreetingMsg] = useState("");
+  useEffect(() => {
+    const receivedGreeting = getGreeting();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setGreetingMsg(receivedGreeting);
+  }, []);
 
   return (
     <h1 className=" mt-3.5 text-3xl font-semibold">
