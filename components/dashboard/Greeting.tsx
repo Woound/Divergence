@@ -7,6 +7,7 @@ export function Greeting() {
   const [greetingMsg, setGreetingMsg] = useState("");
   useEffect(() => {
     const receivedGreeting = getGreeting();
+    // TODO(#5): server-side greeting via profiles.timezone
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setGreetingMsg(receivedGreeting);
   }, []);
